@@ -8,7 +8,6 @@ sig , sr = librosa.load(audio_path)
 #print(type(x[0]), type(sr))
 # <class 'numpy.ndarray'> <class 'int'>
 
-
 #print(x, sr)
 
 print(len(sig))
@@ -45,5 +44,3 @@ print(max(log_spectrogram[0]))
 # plt.colorbar(format="%+2.0f dB")
 # plt.title("Spectrogram (dB)")
 # plt.show()
-
-
