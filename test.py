@@ -1,46 +1,44 @@
 import numpy as np
-import librosa, librosa.display 
+import librosa
+from librosa import display
+import matplotlib
 import matplotlib.pyplot as plt
+import os
+import scipy.signal
 
-FIG_SIZE = (15,10)
-audio_path = './25-21.mp3'
-sig , sr = librosa.load(audio_path)
-#print(type(x[0]), type(sr))
-# <class 'numpy.ndarray'> <class 'int'>
+# music file
+librosa_ex = librosa.ex('trumpet')
+audio_path_1 = './1.mp3'
+audio_path_2 = './2.mp3'
+audio_path_3 = './3.mp3'
 
-#print(x, sr)
+n_fft = 4096
+hop_length = 512
 
-print(len(sig))
-sig = sig[:round(len(sig)/8)]
-time = np.linspace(0, len(sig)/sr, len(sig))
-
-# STFT -> spectrogram
-hop_length = 512  # 전체 frame 수
-n_fft = 2048  # frame 하나당 sample 수
-
-# calculate duration hop length and window in seconds
-hop_length_duration = float(hop_length)/sr
-n_fft_duration = float(n_fft)/sr
-
-# STFT
-stft = librosa.stft(sig, n_fft=n_fft, hop_length=hop_length)
-#print(stft[0])
-# 복소공간 값 절댓값 취하기
-magnitude = np.abs(stft)
-#print(type(magnitude))
-# magnitude >> Decibels 
-log_spectrogram = librosa.amplitude_to_db(magnitude)
-print(max(log_spectrogram[0]))
+# Visualizing audio and f0 base frequency
 
 
-# for i in range(0,100):
-#     print(max(log_spectrogram[i]))
+def generate_spectrogram(audio, n_fft, hop_length):
+    fig, ax = plt.subplots()
+    amplitude, sr = librosa.load(audio)
+    stft_absolute_values = np.abs(librosa.stft(amplitude))
+    db_base_stft = librosa.amplitude_to_db(stft_absolute_values, ref=np.max)
+    img = display.specshow(db_base_stft, y_axis='log', x_axis='time', ax=ax)
+    ax.set_title('STFT spectrogram')
+    fig.colorbar(img, ax=ax, format="%+2.0f dB")
 
-# #display spectrogram
-# plt.figure(figsize=FIG_SIZE)
-# librosa.display.specshow(log_spectrogram, sr=sr, hop_length=hop_length)
-# plt.xlabel("Time")
-# plt.ylabel("Frequency")
-# plt.colorbar(format="%+2.0f dB")
-# plt.title("Spectrogram (dB)")
-# plt.show()
+    # print(db_base_stft)
+
+    # add f0 plot
+    f0, voiced_flag_t, voiced_probs_t = librosa.pyin(amplitude, fmin=librosa.note_to_hz('C2'),
+                                                     fmax=librosa.note_to_hz('C7'), sr=sr,
+                                                     hop_length=hop_length, frame_length=n_fft,
+                                                     pad_mode='constant', center=True)
+    f0_times = librosa.times_like(f0)
+
+    ax.plot(f0_times, f0, label='f0', color='cyan', linewidth=2)
+
+    # plt.show()
+
+
+generate_spectrogram(audio_path_1, n_fft, hop_length)
