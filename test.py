@@ -12,13 +12,15 @@ audio_path_1 = './1.mp3'
 audio_path_2 = './2.mp3'
 audio_path_3 = './3.mp3'
 
+# Default
+
 n_fft = 4096
 hop_length = 512
 
 # Visualizing audio and f0 base frequency
 
 
-def generate_spectrogram(audio, n_fft, hop_length):
+def generate_spectrogram(audio, n_fft=4096, hop_length=512):
     fig, ax = plt.subplots()
     amplitude, sr = librosa.load(audio)
     stft_absolute_values = np.abs(librosa.stft(amplitude))
@@ -38,7 +40,20 @@ def generate_spectrogram(audio, n_fft, hop_length):
 
     ax.plot(f0_times, f0, label='f0', color='cyan', linewidth=2)
 
-    # plt.show()
+    plt.show()
+
+    return {"x": f0_times, "y": f0}
 
 
-generate_spectrogram(audio_path_1, n_fft, hop_length)
+# Input: Audio Files -> Return: Each f0 arrays [nx1]
+def generate_f0(my_audio, target_audio):
+
+    my_data = generate_spectrogram(my_audio)
+    target_data = generate_spectrogram(target_audio)
+
+    return [my_data, target_data]
+
+
+result = generate_f0(librosa_ex, audio_path_1)
+
+print(result)
