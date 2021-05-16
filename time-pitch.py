@@ -1,10 +1,7 @@
 import numpy as np
 import librosa
 from librosa import display
-import matplotlib
 import matplotlib.pyplot as plt
-import os
-import scipy.signal
 
 # music file
 librosa_ex = librosa.ex('trumpet')
@@ -40,7 +37,7 @@ def generate_spectrogram(audio, n_fft=4096, hop_length=512):
 
     ax.plot(f0_times, f0, label='f0', color='cyan', linewidth=2)
 
-    plt.show()
+    #plt.show()
 
     return {"x": f0_times, "y": f0}
 
@@ -56,4 +53,9 @@ def generate_f0(my_audio, target_audio):
 
 result = generate_f0(librosa_ex, audio_path_1)
 
-print(result)
+for re in result:
+    for r in re:
+        print(r)
+
+        # 원본 데이터와 인덱스(길이)가 같게
+        # ndarray 사용

@@ -14,3 +14,21 @@ def edit_P(data,sr,target_P,now_P):
 def edit_L(data,target_L,now_L):
     delta_L = now_L/target_L
     return librosa.effects.time_stretch(data,delta_L)
+
+notes = []
+
+def block(data):
+    sp = librosa.effects.split(data)
+    for
+        #무음처리
+        class note:
+            data
+            f0
+            beat
+        notes.push(note)
+        #음처리
+        class note:
+            data
+            f0
+            beat
+        notes.push(note)
