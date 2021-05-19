@@ -17,18 +17,18 @@ def edit_L(data,target_L,now_L):
 
 notes = []
 
-def block(data):
-    sp = librosa.effects.split(data)
-    for
-        #무음처리
-        class note:
-            data
-            f0
-            beat
-        notes.push(note)
-        #음처리
-        class note:
-            data
-            f0
-            beat
-        notes.push(note)
+# def block(data):
+#     sp = librosa.effects.split(data)
+#     for
+#         #무음처리
+#         class note:
+#             data
+#             f0
+#             beat
+#         notes.push(note)
+#         #음처리
+#         class note:
+#             data
+#             f0
+#             beat
+#         notes.push(note)
