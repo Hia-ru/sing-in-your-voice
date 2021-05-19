@@ -1,3 +1,5 @@
+from os import lstat
+from types import CodeType
 import numpy as np
 import matplotlib.pyplot as plt
 import librosa as lr
@@ -5,12 +7,14 @@ import librosa as lr
 def delta_pitch(target, now):
     return 12 * np.log2(target / now)
 
-def edit_pitch(data, sr, target_pitch, current_pitch):
+def edit_pitch(data, sr, current_pitch, target_pitch):
     d = delta_pitch(target_pitch, current_pitch)
     step = np.round(d * 4)
-    data = lr.effects.pitch_shift(data, sr, step, bins_per_octave = 48)
+    return lr.effects.pitch_shift(data, sr, step, bins_per_octave = 48)
 
-def edit_length(data, target_length, now_length):
+def edit_length(data, now_duration, target_duration):
+    target_length = target_duration[1] - target_duration[0] + 1
+    now_length = now_duration[1] - now_duration[0] + 1
     delta_length = now_length / target_length
     return lr.effects.time_stretch(data, delta_length)
 
@@ -88,7 +92,7 @@ class note:
         print('-'*70)
 
 
-class blocking:
+class block:
     def __init__(self, y, sr):
         """
         notes: list of note
@@ -98,51 +102,101 @@ class blocking:
         voiced_blocks: list of voiced index arrays
         unvoiced_blocks: list of unvoiced index arrays
         """
-        self.notes = []
-        self.y = y
-        self.f0, self.voiced_flag = generate_f0(y, sr)
-        self.voiced_blocks = []
-        self.unvoiced_blocks = []
+        self.__notes = []
+        self.__y = y
+        self.__sr = sr
+        self.__f0, self.__voiced_flag = generate_f0(y, sr)
+        self.__voiced_blocks = []
+        self.__unvoiced_blocks = []
     
     def make_blocks(self):
-        voiced_flag = self.voiced_flag
+        voiced_flag = self.__voiced_flag
         voiced_idx = np.where(voiced_flag == True)[0]
         unvoiced_idx = np.where(voiced_flag == False)[0]
 
         # List of Index arrays
         voiced_list = np.split(voiced_idx, np.where(np.diff(voiced_idx) != 1)[0] + 1)
         unvoiced_list = np.split(unvoiced_idx, np.where(np.diff(unvoiced_idx) != 1)[0] + 1)
-
         for sound in voiced_list:
-            self.voiced_blocks.append(sound)
+            self.__voiced_blocks.append(sound)
             start_idx = sound[0] # start index of duration in frame
             end_idx = sound[len(sound) - 1] # end index of duration in frame
-            dur = frame_to_samples(len(self.y), start_idx, end_idx) # duration in sample
+            dur = frame_to_samples(len(self.__y), start_idx, end_idx) # duration in sample
 
-            n = note(self.y[dur[0] : dur[1]], self.f0[start_idx : end_idx], [dur[0], dur[1]], True)
-            self.notes.append(n)
+            n = note(self.__y[dur[0] : dur[1]], self.__f0[start_idx : end_idx], [dur[0], dur[1]], True)
+            self.__notes.append(n)
 
         for sound in unvoiced_list:
-            self.unvoiced_blocks.append(sound)
+            self.__unvoiced_blocks.append(sound)
             start_idx = sound[0]
             end_idx = sound[len(sound) - 1]
-            dur = frame_to_samples(len(self.y), start_idx, end_idx)
+            dur = frame_to_samples(len(self.__y), start_idx, end_idx)
 
-            n = note(self.y[dur[0] : dur[1]], self.f0[start_idx : end_idx], [dur[0], dur[1]], False)
-            self.notes.append(n)
+            n = note(self.__y[dur[0] : dur[1]], self.__f0[start_idx : end_idx], [dur[0], dur[1]], False)
+            self.__notes.append(n)
 
-        self.notes = sorted(self.notes, key = lambda x : x.duration[0]) # sort by time
-        return self.notes
+        self.__notes = sorted(self.__notes, key = lambda x : x.duration[0]) # sort by time
+        return self.__notes
 
     def print(self, start_idx, end_idx):
         print("About Notes from {0} to {1}".format(start_idx, end_idx))
         for i in range(start_idx, end_idx + 1):
-            self.notes[i].print()
+            self.__notes[i].print()
+
+    def glue_notes(self):
+        y = np.array([])
+        for note in self.__notes:
+            y = np.r_[y,note.y]
+        self.__y = y
+
+    def match_duration(self, target_y):
+        from_notes = self.make_blocks()
+        to_notes = block(target_y,self.__sr).make_blocks()
+        if len(to_notes) != len(from_notes):
+            raise Exception('Block count mismatch!!')
+        for from_note, to_note in zip(from_notes, to_notes):
+            from_note.y = edit_length(from_note.y, from_note.duration, to_note.duration)
+            from_note.duration = to_note.duration
+        self.__notes = from_notes
+    
+    def match_pitch(self,target_y):
+        from_notes = self.__notes
+        to_notes = block(target_y,self.__sr).make_blocks()
+        if len(to_notes) != len(from_notes):
+            raise Exception('Block count mismatch!!')
+        for from_note, to_note in zip(from_notes, to_notes):
+            if np.isnan(from_note.f0.all()) or np.isnan(to_note.f0.all()):
+                from_f0 = np.mean(from_note.f0)
+                to_f0 = np.mean(to_note.f0)
+                from_note.y = edit_pitch(from_note.y, sr, from_f0, to_f0)
+        self.__notes = from_notes
+        
+    def match(self, target_y):
+        self.match_duration(target_y)
+        self.match_pitch(target_y)
+        self.glue_notes()
+        return self.__y
 
 
-"""
-usage
-data = blocking(y, sampling_rate) full data
-notes = data.make_blocks()
-data.print(1, 3)
-"""
+
+#### code test ####
+
+# from read_write_audio import write_audio
+
+# audio_path = './test.mp3'
+# yy , sr = lr.load(audio_path)
+
+# audio_path = './2.mp3'
+# sig , sr = lr.load(audio_path)
+# size = sr*5
+# sig = sig[0:size]
+# # y = lr.effects.time_stretch(sig, 0.7)
+
+# B = block(yy,sr)
+# y = B.match(sig)
+# print(sig.shape)
+# print(yy.shape)
+# print(type(y))
+
+# write_audio('./',y,file_name='ttt')
+
