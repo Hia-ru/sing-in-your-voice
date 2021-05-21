@@ -106,7 +106,7 @@ class block:
         self.__voiced_blocks = []
         self.__unvoiced_blocks = []
     
-    def make_blocks(self):
+    def __make_blocks(self):
         voiced_flag = self.__voiced_flag
         voiced_idx = np.where(voiced_flag == True)[0]
         unvoiced_idx = np.where(voiced_flag == False)[0]
@@ -140,15 +140,15 @@ class block:
         for i in range(start_idx, end_idx + 1):
             self.__notes[i].print()
 
-    def glue_notes(self):
+    def __glue_notes(self):
         y = np.array([])
         for note in self.__notes:
             y = np.r_[y,note.y]
         self.__y = y
 
-    def match_duration(self, target_y):
-        from_notes = self.make_blocks()
-        to_notes = block(target_y,self.__sr).make_blocks()
+    def __match_duration(self, target_y):
+        from_notes = self.__make_blocks()
+        to_notes = block(target_y,self.__sr).__make_blocks()
         if len(to_notes) != len(from_notes):
             raise Exception('Block count mismatch!!')
         for from_note, to_note in zip(from_notes, to_notes):
@@ -156,9 +156,9 @@ class block:
             from_note.duration = to_note.duration
         self.__notes = from_notes
     
-    def match_pitch(self,target_y):
+    def __match_pitch(self,target_y):
         from_notes = self.__notes
-        to_notes = block(target_y,self.__sr).make_blocks()
+        to_notes = block(target_y,self.__sr).__make_blocks()
         if len(to_notes) != len(from_notes):
             raise Exception('Block count mismatch!!')
         for from_note, to_note in zip(from_notes, to_notes):
@@ -169,31 +169,9 @@ class block:
         self.__notes = from_notes
         
     def match(self, target_y):
-        self.match_duration(target_y)
-        self.match_pitch(target_y)
-        self.glue_notes()
+        self.__match_duration(target_y)
+        self.__match_pitch(target_y)
+        self.__glue_notes()
         return self.__y
 
-
-
-#### code test ####
-
-# from read_write_audio import write_audio
-
-# audio_path = './test.mp3'
-# yy , sr = lr.load(audio_path)
-
-# audio_path = './2.mp3'
-# sig , sr = lr.load(audio_path)
-# size = sr*5
-# sig = sig[0:size]
-# # y = lr.effects.time_stretch(sig, 0.7)
-
-# B = block(yy,sr)
-# y = B.match(sig)
-# print(sig.shape)
-# print(yy.shape)
-# print(type(y))
-
-# write_audio('./',y,file_name='ttt')
 

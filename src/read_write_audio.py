@@ -17,7 +17,7 @@ def read_audio(fileName, sr=22050, n_fft=2048, win_length=2048, hop_length=512, 
     y: numpy array of sound data
     sr: sampling rate
     """
-    name = fileName.rstrip('.mp3')
+    name = fileName.replace('.mp3','')
     name = name+'.wav'
     AudioSegment.from_file(fileName).export(name, format="wav", bitrate="16k")
 
