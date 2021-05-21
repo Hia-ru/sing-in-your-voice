@@ -18,7 +18,7 @@ def read_audio(fileName, sr=22050, n_fft=2048, win_length=2048, hop_length=512, 
     sr: sampling rate
     """
     name = fileName.replace('.mp3','')
-    name = name+'.wav'
+    name = 'temp.wav'
     AudioSegment.from_file(fileName).export(name, format="wav", bitrate="16k")
 
     y, sr = lr.load(name, sr) # Loading Data
@@ -39,12 +39,12 @@ def read_audio(fileName, sr=22050, n_fft=2048, win_length=2048, hop_length=512, 
 
 
 # Write sound data
-def write_audio(dir_path, y, sr=22050, win_length=2048, hop_length=512, file_name='test'):
+def write_audio(y, file_name, sr=22050, win_length=2048, hop_length=512):
     """
     y : Sound data
     dirPath, fileName : Path of file
     """
-    file_path = dir_path + file_name
+    file_path = './' + file_name
     # files
     mp3_file = os.path.abspath(file_path + '.mp3')
     wav_file = os.path.abspath(file_path + '.wav')

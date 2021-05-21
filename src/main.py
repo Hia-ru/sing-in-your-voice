@@ -7,8 +7,18 @@ def search_mp3():
     return mp3_list
 
 while True:
-
-
+    mp3_list = search_mp3()
+    print('---- MP3 List ----')
+    for mp3 in mp3_list:
+        print(mp3)
+    song = input('input your song file: ')
+    name = song.rstrip('.mp3')
+    song, sr = read_audio(name+'.mp3')
+    origin = input('input original song file: ')
+    origin, sr = read_audio(origin)
+    song = block(song, sr)
+    song = song.match(origin)
+    write_audio(song,name+'(수정됨).mp3')
 
 #### code test ####
 
