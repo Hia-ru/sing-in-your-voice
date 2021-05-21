@@ -16,6 +16,9 @@ while True:
     song, sr = read_audio(name+'.mp3')
     origin = input('input original song file: ')
     origin, sr = read_audio(origin)
+    ##
+    #보컬추출 코드
+    ##
     song = block(song, sr)
     song = song.match(origin)
     write_audio(song,name+'(수정됨).mp3')

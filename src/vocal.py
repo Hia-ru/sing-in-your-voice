@@ -1,6 +1,6 @@
 import librosa as lr
 
-def vocal_extract(y,sr):
+def vocal_extract(path):
 	#MFCC 
 	# wav_length = len(y)/sr
 	frame_length = 0.025
