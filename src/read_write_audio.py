@@ -23,6 +23,8 @@ def read_audio(fileName, sr=22050, n_fft=2048, win_length=2048, hop_length=512, 
 
     y, sr = lr.load(name, sr) # Loading Data
     stft_result = lr.stft(y, n_fft=n_fft, win_length=win_length, hop_length=hop_length)
+    
+    os.remove(name)
 
     if flag_to_draw :
         D = np.abs(stft_result)
