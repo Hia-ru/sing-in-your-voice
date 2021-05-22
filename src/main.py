@@ -1,10 +1,15 @@
 from read_write_audio import read_audio, write_audio
 from edit import block
 import os
+from pathlib import Path
 
 def search_mp3():
-
+    p = Path("../")
+    q = p/"res"
+    mp3_list = list(q.glob('**/*.mp3'))
     return mp3_list
+
+# [PosixPath('../res/1.mp3'), PosixPath('../res/3.mp3'), PosixPath('../res/2.mp3')]
 
 while True:
     mp3_list = search_mp3()
