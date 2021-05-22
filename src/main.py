@@ -4,7 +4,7 @@ import os
 from multiprocessing import freeze_support
 
 def search_mp3():
-    mp3_list = ['(수정됨)','25-21']
+    mp3_list = ['추출','25-21']
     return mp3_list
 
 def main():
@@ -31,19 +31,24 @@ def main():
                 print('Please re-enter')
                 continue
             break
+        name = song
 
         # 음원 로딩
-        print('loading and extracting vocal...')
-        origin, sr = read_audio(origin+'.mp3')
-        song, sr = read_vocal(song+'.mp3',sr)
-
+        print('\nloading and extracting vocal...\n')
+        song, sr = read_audio(song+'.mp3')
+        origin, music, sr = separate_vocal(origin+'.mp3',sr)
+        
         # 보정
         print('\ncalibrating audio...\n')
         song = block(song, sr)
-        song = song.match(origin,do_print_blocks=True)
+        song = song.match(origin)
+
+        if len(song) == len(music):
+            for s, m in zip(song, music):
+                s = s + m
 
         # 저장
-        name = song+'(수정됨).mp3'
+        name = name+'(수정됨)'
         write_audio(song,name)
         print('All completed. saved as '+name)
 

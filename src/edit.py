@@ -150,7 +150,7 @@ class block:
         self.__y = y
 
     def __match_duration(self, target_notes):
-        from_notes = self.__make_blocks()
+        from_notes = self.__notes
         if len(target_notes) != len(from_notes):
             raise Exception('Block count mismatch!!')
         for from_note, to_note in zip(from_notes, target_notes):
@@ -169,27 +169,14 @@ class block:
                 from_note.y = edit_pitch(from_note.y, self.__sr, from_f0, to_f0)
         self.__notes = from_notes
         
-    def match(self, target_y, do_print_blocks=False):
+    def match(self, target_y):
         y_block = block(target_y,self.__sr)
         y_notes = y_block.__make_blocks()
         self.__make_blocks()
-        if do_print_blocks:
-            print('origin')
-            y_block.print_blocks()
-            print('song')
-            self.print_blocks()
         self.__match_duration(y_notes)
         self.__match_pitch(y_notes)
         self.__glue_notes()
         return self.__y
 
-    def print_blocks(self):
-        # for i, n in enumerate(self.__notes):
-        #     print('block '+str(i))
-        #     n.print_duration()
-        # print('\n')
-        print(len(self.__notes))
-    def get_notes(self):
-        return self.__notes
 
 

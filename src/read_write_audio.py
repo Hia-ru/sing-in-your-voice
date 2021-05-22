@@ -62,7 +62,7 @@ from read_write_audio import read_audio
 import os
 from spleeter.audio.adapter import AudioAdapter
 
-def read_vocal(path, sr):
+def separate_vocal(path, sr):
     separator = Separator('spleeter:2stems')
     
     audio_loader = AudioAdapter.default()
@@ -71,8 +71,12 @@ def read_vocal(path, sr):
     prediction = separator.separate(y)
     vocal = prediction['vocals']
     audio_loader.save('./temp0.mp3',vocal,sr)
-    y, sr = read_audio('./temp0.mp3')
-    #os.remove('./temp.mp3')
-    return y, sr
+    vocals, sr = read_audio('./temp0.mp3')
+    os.remove('./temp0.mp3')
+    accompaniment = prediction['accompaniment']
+    audio_loader.save('./temp0.mp3',accompaniment,sr)
+    accompaniment, sr = read_audio('./temp0.mp3')
+    os.remove('./temp0.mp3')
+    return vocals, accompaniment, sr
 
 
