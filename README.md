@@ -11,5 +11,5 @@ Librosa와 Spleeter를 사용한 보컬보정프로그램
 - 노현
 
 
-Librosa: https://github.com/librosa/librosa
+Librosa: https://github.com/librosa/librosa  
 Spleeter: https://github.com/deezer/spleeter
