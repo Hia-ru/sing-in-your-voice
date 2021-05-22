@@ -54,3 +54,29 @@ def write_audio(y, file_name, sr=22050, win_length=2048, hop_length=512):
     # convert wav to mp3
     sound = AudioSegment.from_wav(wav_file)
     sound.export(mp3_file, format="mp3") 
+
+
+
+from spleeter.separator import Separator
+from read_write_audio import read_audio
+import os
+from spleeter.audio.adapter import AudioAdapter
+
+def separate_vocal(path, sr):
+    separator = Separator('spleeter:2stems')
+    
+    audio_loader = AudioAdapter.default()
+    y, sr = audio_loader.load(path, sample_rate=sr)
+
+    prediction = separator.separate(y)
+    vocal = prediction['vocals']
+    audio_loader.save('./temp0.mp3',vocal,sr)
+    vocals, sr = read_audio('./temp0.mp3')
+    os.remove('./temp0.mp3')
+    accompaniment = prediction['accompaniment']
+    audio_loader.save('./temp0.mp3',accompaniment,sr)
+    accompaniment, sr = read_audio('./temp0.mp3')
+    os.remove('./temp0.mp3')
+    return vocals, accompaniment, sr
+
+

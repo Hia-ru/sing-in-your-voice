@@ -89,6 +89,9 @@ class note:
 
         print('-'*70)
 
+    def print_duration(self):
+        print(self.duration)
+
 class block:
     def __init__(self, y, sr):
         """
@@ -139,29 +142,27 @@ class block:
         print("About Notes from {0} to {1}".format(start_idx, end_idx))
         for i in range(start_idx, end_idx + 1):
             self.__notes[i].print()
-
+           
     def __glue_notes(self):
         y = np.array([])
         for note in self.__notes:
             y = np.r_[y,note.y]
         self.__y = y
 
-    def __match_duration(self, target_y):
-        from_notes = self.__make_blocks()
-        to_notes = block(target_y,self.__sr).__make_blocks()
-        if len(to_notes) != len(from_notes):
+    def __match_duration(self, target_notes):
+        from_notes = self.__notes
+        if len(target_notes) != len(from_notes):
             raise Exception('Block count mismatch!!')
-        for from_note, to_note in zip(from_notes, to_notes):
+        for from_note, to_note in zip(from_notes, target_notes):
             from_note.y = edit_length(from_note.y, from_note.duration, to_note.duration)
             from_note.duration = to_note.duration
         self.__notes = from_notes
     
-    def __match_pitch(self,target_y):
+    def __match_pitch(self,target_notes):
         from_notes = self.__notes
-        to_notes = block(target_y,self.__sr).__make_blocks()
-        if len(to_notes) != len(from_notes):
+        if len(target_notes) != len(from_notes):
             raise Exception('Block count mismatch!!')
-        for from_note, to_note in zip(from_notes, to_notes):
+        for from_note, to_note in zip(from_notes, target_notes):
             if np.isnan(from_note.f0.all()) or np.isnan(to_note.f0.all()):
                 from_f0 = np.mean(from_note.f0)
                 to_f0 = np.mean(to_note.f0)
@@ -169,9 +170,13 @@ class block:
         self.__notes = from_notes
         
     def match(self, target_y):
-        self.__match_duration(target_y)
-        self.__match_pitch(target_y)
+        y_block = block(target_y,self.__sr)
+        y_notes = y_block.__make_blocks()
+        self.__make_blocks()
+        self.__match_duration(y_notes)
+        self.__match_pitch(y_notes)
         self.__glue_notes()
         return self.__y
+
 
 
