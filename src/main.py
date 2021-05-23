@@ -1,5 +1,5 @@
 from read_write_audio import *
-from edit import block
+from edit import *
 from multiprocessing import freeze_support
 import glob
 
@@ -13,7 +13,6 @@ def search_mp3():
 def read_wav(fileName, sr=22050):
     y, sr = lr.load(fileName, sr) # Loading Data
     return y, sr
-
 
 def main():
     while True:
@@ -47,16 +46,32 @@ def main():
         origin, music, sr = separate_vocal(origin+'.mp3',sr)
         
         # 보정
-        print('\ncalibrating audio...\n')
-        song = block(song, sr)
-        song = song.match(origin)
+        print('\ncalibrating audio...')
+        print('    edit length...')
+        song = edit_length(song,len(song),len(origin))
 
-        out = song
-        if len(origin) == len(music):
+        print('    generate f0...')
+        f0_s = generate_f0(song, sr)
+        f0_o = generate_f0(origin, sr)
+
+        print('    chunking...')
+        size = 2048
+        song = list_chunk(song,size)
+        #origin = list_chunk(origin,size)
+        #f0_s = list_chunk(f0_s,size)
+        #f0_o = list_chunk(f0_o,size)
+
+        print('    edit pitch...')
+        out = []
+        for i, s in enumerate(song):
+            out.extend(edit_pitch(s, sr, np.mean(f0_s[4*i:4*(i+1)]), np.mean(f0_o[4*i:4*(i+1)])))
+
+        print('    Postprocessing...')
+        if len(out) == len(music):
             for i in range(len(music)):
-                out[i] = origin[i] + music[i]
+                out[i] = out[i]*5 + music[i]
         else:
-            print(len(song))
+            print(len(out))
             print(len(music))
 
         # 저장
