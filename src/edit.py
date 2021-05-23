@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import librosa as lr
+import pandas as pd
 
 def delta_pitch(target, now):
     return 12 * np.log2(target / now)
@@ -91,6 +92,20 @@ class note:
 
     def print_duration(self):
         print(self.duration)
+    
+    def delta_duration(self):
+        return self.duration[1]-self.duration[0]+1
+
+    def append(self, note, is_voice):
+        if self.duration[1] +1 == note.duration[0]:
+            self.y.extend(note.y)
+            self.f0.extend(note.f0)
+            self.duration = [self.duration[0],note.duration[1]]
+            self.is_voice = is_voice
+            return self
+        else:
+            raise Exception("can't append note!!")
+
 
 class block:
     def __init__(self, y, sr):
@@ -123,7 +138,7 @@ class block:
             end_idx = sound[len(sound) - 1] # end index of duration in frame
             dur = frame_to_samples(len(self.__y), start_idx, end_idx) # duration in sample
 
-            n = note(self.__y[dur[0] : dur[1]], self.__f0[start_idx : end_idx], [dur[0], dur[1]], True)
+            n = note(self.__y[dur[0] : dur[1]], self.__f0[start_idx : end_idx+1], [dur[0], dur[1]], True)
             self.__notes.append(n)
 
         for sound in unvoiced_list:
@@ -132,7 +147,7 @@ class block:
             end_idx = sound[len(sound) - 1]
             dur = frame_to_samples(len(self.__y), start_idx, end_idx)
 
-            n = note(self.__y[dur[0] : dur[1]], self.__f0[start_idx : end_idx], [dur[0], dur[1]], False)
+            n = note(self.__y[dur[0] : dur[1]], self.__f0[start_idx : end_idx+1], [dur[0], dur[1]], False)
             self.__notes.append(n)
 
         self.__notes = sorted(self.__notes, key = lambda x : x.duration[0]) # sort by time
@@ -152,6 +167,10 @@ class block:
     def __match_duration(self, target_notes):
         from_notes = self.__notes
         if len(target_notes) != len(from_notes):
+            print('target')
+            print(len(target_notes))
+            print('from')
+            print(len(from_notes))
             raise Exception('Block count mismatch!!')
         for from_note, to_note in zip(from_notes, target_notes):
             from_note.y = edit_length(from_note.y, from_note.duration, to_note.duration)
@@ -173,10 +192,60 @@ class block:
         y_block = block(target_y,self.__sr)
         y_notes = y_block.__make_blocks()
         self.__make_blocks()
+        y_notes = self.__match_blocks(y_notes)
         self.__match_duration(y_notes)
         self.__match_pitch(y_notes)
         self.__glue_notes()
         return self.__y
+
+    def __match_blocks(self,target_notes):
+        l_s = len(self.__notes)
+        l_t = len(target_notes)
+        #end_p_flag = 0
+        if l_s != l_t:
+            d_l = l_s - l_t
+            flag = 0
+            if d_l > 0:
+                long_notes = self.__notes
+                flag = 0
+            else:
+                long_notes = target_notes
+                flag = 1
+            # if d_l%2 != 0:
+            #     end_p_flag = 1
+            notes = pd.DataFrame(columns=['idx', 'note', 'delta'])
+            for i, note in enumerate(long_notes):
+                notes.append({ 'idx':i, 'note':note, 'delta':note.delta_duration() }, ignore_index=True)
+            notes.sort_values(by='delta')
+            i = 0
+            while d_l > 0:
+                idx = notes.iloc[[i],[0]]
+                if long_notes[idx] == 0:
+                    rear = long_notes[idx+2:]
+                    front =  long_notes[idx].append(long_notes[idx+1])
+                    long_notes = front.extend(rear)
+                    d_l = d_l - 1
+                    i = i+1
+                elif long_notes[idx] == len(long_notes)-1:
+                    front = long_notes[:idx-2]
+                    rear =  long_notes[idx-1].append(long_notes[idx])
+                    long_notes = front.extend(rear)
+                    d_l = d_l - 1
+                    i = i+1
+                else:
+                    front=long_notes[:idx-2]
+                    rear = long_notes[idx+2:]
+                    mid =  long_notes[idx-1].append(long_notes[idx]).append(long_notes[idx+1])
+                    front.extend(mid)
+                    long_notes = front.extend(rear)
+                    d_l = d_l - 2
+                    i = i+1
+            if flag:
+                target_notes = long_notes
+            else:
+                self.__notes = long_notes
+        return target_notes
+
 
 
 

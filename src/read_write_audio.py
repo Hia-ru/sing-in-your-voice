@@ -52,6 +52,7 @@ def write_audio(y, file_name, sr=22050, win_length=2048, hop_length=512):
     sf.write(wav_file, y, sr, subtype='PCM_24')
 
     # convert wav to mp3
+    AudioSegment.converter = os.path.abspath('./ffmpeg/bin/ffmpeg.exe')
     sound = AudioSegment.from_wav(wav_file)
     sound.export(mp3_file, format="mp3") 
 
